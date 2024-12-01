@@ -1,0 +1,24 @@
+---
+- name: Install tools
+  hosts: all
+  become: yes
+  tasks:
+    - name: install apt packages
+      apt:
+        name:
+          - git
+          - emacs-nox
+          - vim
+          - wget
+          - curl
+          - tar
+          - unzip
+          - percona-toolkit
+    - name: install alp
+      ansible.builtin.shell: 
+        cmd: |
+          cd /tmp && \
+          wget https://github.com/tkuchiki/alp/releases/download/v1.0.21/alp_linux_amd64.tar.gz && \
+          tar -xvf alp_linux_amd64.tar.gz && \
+          chmod +x alp && \
+          cp alp /usr/local/bin/.

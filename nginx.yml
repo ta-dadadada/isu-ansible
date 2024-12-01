@@ -1,0 +1,14 @@
+---
+- name: reload nginx
+  hosts: all
+  become: yes
+  tasks:
+    - name: reload
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+    - name: collect_status
+      ansible.builtin.service_facts:
+    - name: show_status
+      ansible.builtin.debug:
+        var: ansible_facts.services['nginx.service']

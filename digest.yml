@@ -1,0 +1,36 @@
+---
+# 構成に応じてhostは調整
+- name: summary access log
+  hosts: is2
+  become: yes
+  tasks:
+    - name: alp
+      ansible.builtin.shell:
+        cmd: |
+          alp json --file /var/log/nginx/access.log --sort sum -o count,2xx,3xx,4xx,5xx,method,uri,avg,sum -m '/api/user/[^/]+/statistics, /api/user/[^/]+/icon, /api/user/[^/]+/livestream, /api/user/[^/]+/theme, /api/user/[^/]+, /api/livestream/[^/]+/livecomment, /api/livestream/[^/]+/moderate, /api/livestream/[^/]+/reaction, /api/livestream/[^/]+/report, /api/livestream/[^/]+/statistics, /api/livestream/[^/]+/ngwords, /api/livestream/[^/]+/exit, /api/livestream/[^/]+/enter, /api/livestream/[^/]+' --reverse > /tmp/accesslog-digest.txt
+          mv /var/log/nginx/access.log /var/log/nginx/access.log.$(date +%Y%m%d-%H%M%S)
+          nginx -s reopen
+    - name: notice
+      ansible.builtin.shell:
+        cmd: |
+          curl \
+            -F "payload_json={\"username\": \"$(hostname)\", \"content\": \"アクセスログ\"}" \
+            -F "file1=@/tmp/accesslog-digest.txt" \
+            https://discord.com/api/webhooks/1177573098103521350/XXXXXXXXXX
+- name: summary slow-log
+  hosts: is3
+  become: yes
+  tasks:
+    - name: pt-query-digest
+      ansible.builtin.shell:
+        cmd: |
+          cat /var/log/mysql/mysql-slow.log | pt-query-digest > /tmp/slow-query-digest.txt
+          mv /var/log/mysql/mysql-slow.log /var/log/mysql/mysql-slow.log.$(date +%Y%m%d-%H%M%S)
+          mysqladmin flush-logs -uroot -proot
+    - name: notice
+      ansible.builtin.shell:
+        cmd: |
+          curl \
+            -F "payload_json={\"username\": \"$(hostname)\", \"content\": \"スローログ\"}" \
+            -F "file1=@/tmp/slow-query-digest.txt" \
+            https://discord.com/api/webhooks/1177573098103521350/XXXXXXXXXX

@@ -1,0 +1,25 @@
+---
+- name: restart mysql
+  hosts: all
+  become: yes
+  tasks:
+    - name: Copy initdb.d
+      ansible.builtin.copy:
+        src: ../webapp/sql/initdb.d
+        dest: /home/isucon/webapp/sql
+    - name: Copy alter
+      ansible.builtin.copy:
+        src: ../webapp/sql/alter
+        dest: /home/isucon/webapp/sql
+    - name: daemon_reload
+      ansible.builtin.systemd:
+        daemon_reload: true
+    - name: restart
+      ansible.builtin.systemd:
+        name: mysql
+        state: restarted
+    - name: collect_status
+      ansible.builtin.service_facts:
+    - name: show_status
+      ansible.builtin.debug:
+        var: ansible_facts.services['mysql.service']

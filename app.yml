@@ -1,0 +1,28 @@
+---
+- name: deploy webapp
+  hosts: all
+  become: yes
+  tasks:
+    - name: Copy binary
+      ansible.builtin.copy:
+        src: ../webapp/rust/target/release/isupipe
+        dest: /home/isucon/webapp/rust/target/release/isupipe
+        mode: 0777
+        group: isucon
+        owner: isucon
+      notify: restart_webapp
+  handlers:
+    - name: daemon_reload
+      ansible.builtin.systemd:
+        daemon_reload: true
+    - name: restart_webapp
+      ansible.builtin.systemd:
+        name: isupipe-rust
+        state: restarted
+      notify: collect_status
+    - name: collect_status
+      ansible.builtin.service_facts:
+      notify: show_status
+    - name: show_status
+      ansible.builtin.debug:
+        var: ansible_facts.services['isupipe-rust.service']
